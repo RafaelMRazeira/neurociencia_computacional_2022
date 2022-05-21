@@ -1,0 +1,5 @@
+[flake8]
+exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,svai/models/*,svai/tools/*
+max-line-length = 99
+docstring-convention = numpy
+ignore = D100, D104, D105, W503
