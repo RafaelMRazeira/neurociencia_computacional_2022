@@ -64,7 +64,7 @@ class ConnorStevens:
         V : float
             Membrane voltage, in mV.
         """
-        return 0.1 * (V + 29.7) / (1 - (np.exp(-0.1 * (V + 29.7))))
+        return 3.8 * 0.1 * (V + 29.7) / (1 - (np.exp(-0.1 * (V + 29.7))))
 
     def beta_m(self, V):
         """Channel gating kinetics. Functions of membrane voltage.
@@ -74,17 +74,7 @@ class ConnorStevens:
         V : float
             Membrane voltage, in mV.
         """
-        return 4.0 * np.exp(-0.0556 * (V + 54.7))
-
-    def tau_m(self, V):
-        """Channel gating kinetics. Functions of membrane voltage.
-
-        Parameters
-        ----------
-        V : float
-            Membrane voltage, in mV.
-        """
-        return 1 / 3.8 * (self.alfa_m(V) + self.beta_m(V))
+        return 3.8 * 4.0 * np.exp(-0.0556 * (V + 54.7))
 
     def alpha_h(self, V):
         """Channel gating kinetics. Functions of membrane voltage.
@@ -94,7 +84,7 @@ class ConnorStevens:
         V : float
             Membrane voltage, in mV.
         """
-        return 0.07 * np.exp(-0.05 * (V + 48.0))
+        return 3.8 * 0.07 * np.exp(-0.05 * (V + 48.0))
 
     def beta_h(self, V):
         """Channel gating kinetics. Functions of membrane voltage.
@@ -104,17 +94,7 @@ class ConnorStevens:
         V : float
             Membrane voltage, in mV.
         """
-        return 1.0 / (1.0 + np.exp(-0.1 * (V + 18.0)))
-
-    def tau_h(self, V):
-        """Channel gating kinetics. Functions of membrane voltage.
-
-        Parameters
-        ----------
-        V : float
-            Membrane voltage, in mV.
-        """
-        return 1 / 3.8 * (self.alfa_h(V) + self.beta_h(V))
+        return 3.8 / (1.0 + np.exp(-0.1 * (V + 18.0)))
 
     def alpha_n(self, V):
         """Channel gating kinetics. Functions of membrane voltage.
@@ -124,7 +104,7 @@ class ConnorStevens:
         V : float
             Membrane voltage, in mV.
         """
-        return 0.01 * (V + 45.7) / (1.0 - np.exp(-(V + 45.7) / 10.0))
+        return 1.9 * 0.01 * (V + 45.7) / (1.0 - np.exp(-(V + 45.7) / 10.0))
 
     def beta_n(self, V):
         """Channel gating kinetics. Functions of membrane voltage.
@@ -134,17 +114,7 @@ class ConnorStevens:
         V : float
             Membrane voltage, in mV.
         """
-        return 0.125 * np.exp(-0.0125 * (V + 55.7))
-
-    def tau_n(self, V):
-        """Channel gating kinetics. Functions of membrane voltage.
-
-        Parameters
-        ----------
-        V : float
-            Membrane voltage, in mV.
-        """
-        return 2 / 3.8 * (self.alfa_n(V) + self.beta_n(V))
+        return 1.9 * 0.125 * np.exp(-0.0125 * (V + 55.7))
 
     def tau_a(self, V):
         """Channel gating kinetics. Functions of membrane voltage.
@@ -193,14 +163,14 @@ class ConnorStevens:
         return self.g_K * n**4 * (V - self.E_K)
 
     def I_A(self, V, a, b):
-        """Membrane current (in uA/cm^2) Potassium (K = element name).
+        """Membrane current (in uA/cm^2) Calcium (Ca = element name).
 
         Parameters
         ----------
         V : float
             Membrane voltage, in mV.
         n : float
-            Potassium (K) activation gating variable, in dimensionless.
+            Calcium (Ca) activation gating variable, in dimensionless.
         """
         return self.g_A * a**3 * b * (V - self.E_A)
 
@@ -316,7 +286,7 @@ class ConnorStevens:
         dhdt = self.alpha_h(V) * (1.0 - h) - self.beta_h(V) * h
         dndt = self.alpha_n(V) * (1.0 - n) - self.beta_n(V) * n
         dadt = (self.steady_A(V) - a) / self.tau_a(V)
-    
+
         if use_question1_f:
             dbdt = 0.25 * (self.steady_B(V) - b) / self.tau_b(V)
         else:
@@ -336,7 +306,6 @@ class ConnorStevens:
         plot : bool
             If True, plots the results.
         """
-
         X = odeint(
             self.dALLdt,
             [
@@ -351,7 +320,6 @@ class ConnorStevens:
             self.t,
             args=(J, times, self),
         )
-
 
         V = X[:, 0]
         m = X[:, 1]
