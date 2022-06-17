@@ -65,7 +65,7 @@ class PinskyRinzel:
         tau_ca=None,
         k=None,
         exp_time=1e3,
-        dt=0.05e-3
+        dt=0.05e-3,
     ):
 
         self.p = p
@@ -121,7 +121,7 @@ class PinskyRinzel:
         if Vs == -0.0199:
             return 1400
         V2 = Vs + 0.0199
-        beta = 280*10**3 * V2 / (np.exp(200 * V2) - 1)
+        beta = 280 * 10**3 * V2 / (np.exp(200 * V2) - 1)
         return beta
 
     def alpha_h(self, Vs):
@@ -331,27 +331,28 @@ class PinskyRinzel:
                 return Ji * (t > ti) - Ji * (t > tf)
         return 0
 
-    def dALLdt(self, Vs, Vd, m, n, h, mca, mkca, mkahp, Ca, mh, I_inj):
+    def dALLdt(self, Vs, Vd, m, n, h, mca, mkca, mkahp, Ca, mh, I_injs, I_injd):
 
         I_leak_s = self.I_Ls(Vs)
         I_leak_d = self.I_Ld(Vd)
         I_sd = -self.I_ds(Vd, Vs)
 
         dVsdt = (1 / self.C_s) * (
-            - I_leak_s
+            -I_leak_s
             - self.I_Na(Vs, m, h)
             - self.I_K(Vs, n)
             + self.I_ds(Vd, Vs)
-            + I_inj
+            + I_injs
         )
 
         dVddt = (1 / self.C_d) * (
-            - I_leak_d
+            -I_leak_d
             - self.I_Ca(Vd, mca)
             - self.I_KCa(Vd, mkca, Ca)
             - self.I_AHP(Vd, mkahp)
             + self.I_h(Vd, mh)
             + I_sd
+            + I_injd
         )
 
         dmdt = self.alpha_m(Vs) * (1 - m) - self.beta_m(Vs) * m
@@ -361,26 +362,28 @@ class PinskyRinzel:
         dmkcadt = self.alpha_mkca(Vd) * (1 - mkca) - self.beta_mkca(Vd) * mkca
         dmkahpdt = self.alpha_mkahp(Ca) * (1 - mkahp) - self.beta_mkahp(Ca) * mkahp
         dmhdt = (self.m_h_inf(Vd) - mh) / self.tau_m_h(Vd)
-        dCadt = - Ca / self.tau_ca - self.k * self.I_Ca(Vd, mca)
+        dCadt = -Ca / self.tau_ca - self.k * self.I_Ca(Vd, mca)
 
-        return np.array([dVsdt, dVddt, dmdt, dndt, dhdt, dmcadt, dmkcadt, dmkahpdt, dCadt, dmhdt])
+        return np.array(
+            [dVsdt, dVddt, dmdt, dndt, dhdt, dmcadt, dmkcadt, dmkahpdt, dCadt, dmhdt]
+        )
 
-    def runge_kutta(self, X, i_inj_values, g_AHP=40e-9):
+    def runge_kutta(self, X, i_injs_values, i_injd_values, g_AHP=40e-9):
         """Calculate numericaly Runge-Kutta ODE's of fourth grade and step dt.
 
         Parameters
         ----------
         X : array
             State variables [V m h n], in mV, dimensionless, and dimensionless, respectively.
-        i_inj_values : array
+        i_injs_values : array
             Current injection values, in uA/cm^2.
         dt : float
             Time step, in ms.
         """
-        points_total = len(i_inj_values)
+        points_total = len(i_injs_values)
 
         Vs, Vd, m, n, h, mca, mkca, mkahp, ca, mh = X
-        
+
         Vs_out = np.ones(points_total) * Vs
         Vd_out = np.ones(points_total) * Vd
         m_out = np.ones(points_total) * m
@@ -391,13 +394,25 @@ class PinskyRinzel:
         mkahp_out = np.ones(points_total) * mkahp
         ca_out = np.ones(points_total) * ca
         mh_out = np.ones(points_total) * mh
-        IKCa_out = np.zeros(points_total) 
+        IKCa_out = np.zeros(points_total)
         IKAHP_out = np.zeros(points_total)
         Ih_out = np.zeros(points_total)
 
-
         for t in tqdm(range(1, points_total)):
-            k1 = self.dt * self.dALLdt(Vs, Vd, m, n, h, mca, mkca, mkahp, ca, mh, i_inj_values[t])
+            k1 = self.dt * self.dALLdt(
+                Vs,
+                Vd,
+                m,
+                n,
+                h,
+                mca,
+                mkca,
+                mkahp,
+                ca,
+                mh,
+                i_injs_values[t],
+                i_injd_values[t],
+            )
             k2 = self.dt * self.dALLdt(
                 Vs + 0.5 * k1[0],
                 Vd + 0.5 * k1[1],
@@ -409,7 +424,8 @@ class PinskyRinzel:
                 mkahp + 0.5 * k1[7],
                 ca + 0.5 * k1[8],
                 mh + 0.5 * k1[9],
-                i_inj_values[t],
+                i_injs_values[t],
+                i_injd_values[t],
             )
 
             k3 = self.dt * self.dALLdt(
@@ -423,7 +439,8 @@ class PinskyRinzel:
                 mkahp + 0.5 * k2[7],
                 ca + 0.5 * k2[8],
                 mh + 0.5 * k2[9],
-                i_inj_values[t],
+                i_injs_values[t],
+                i_injd_values[t],
             )
 
             k4 = self.dt * self.dALLdt(
@@ -437,7 +454,8 @@ class PinskyRinzel:
                 mkahp + k3[7],
                 ca + k3[8],
                 mh + k3[9],
-                i_inj_values[t],
+                i_injs_values[t],
+                i_injd_values[t],
             )
 
             Vs = Vs + (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6
@@ -501,7 +519,8 @@ class PinskyRinzel:
             List of time_initials and finals for pulses.
         """
 
-        i_inj_values = [self.I_inj(t, J, times) for t in self.t]
+        i_injs_values = [self.I_inj(t, J["s"], times["s"]) for t in self.t]
+        i_injd_values = [self.I_inj(t, J["d"], times["d"]) for t in self.t]
 
         Vs0 = V if V is not None else -60e-3
         Vd0 = V if V is not None else -60e-3
@@ -516,7 +535,7 @@ class PinskyRinzel:
 
         X = [Vs0, Vd0, m0, n0, h0, mca0, mkca0, mkahp0, Ca0, mh0]
 
-        sol = self.runge_kutta(X, i_inj_values)
+        sol = self.runge_kutta(X, i_injs_values, i_injd_values)
 
         Vs = sol[0]
         Vd = sol[1]
@@ -527,7 +546,7 @@ class PinskyRinzel:
         mkca = sol[6]
         mkahp = sol[7]
         ca = sol[8]
-        breakpoint()
+
         plt.figure(figsize=(16, 10))
 
         plt.subplot(4, 1, 1)
@@ -561,4 +580,4 @@ class PinskyRinzel:
 
 if __name__ == "__main__":
     PR = PinskyRinzel(exp_time=1.0)
-    PR.run(J=[0], times=[(0, 100)])
+    PR.run(J={"s": [0], "d": [0]}, times={"s": [(0, 100)], "d": [(0, 100)]})
