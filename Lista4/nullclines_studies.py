@@ -13,7 +13,6 @@ def calc_nullclines(I=0):
 
     dvdt_nullcline = lambda v: v - v**3 / 3 + I
     dwdt_nullcline = lambda v: (v + 0.7) / 0.8
-    # dwdt_nullcline = lambda v: 0.8 * v - 0.7
 
     v = np.linspace(-4, 4, 1000)
 
@@ -92,7 +91,3 @@ def plot_equilibrium_nullclines(v, dvdt_nullcline, dwdt_nullcline, idx):
     plt.ylim(-4, 4)
     plt.xlim(-4, 4)
     plt.show()
-
-
-if __name__ == "__main__":
-    plot_nullclines()
