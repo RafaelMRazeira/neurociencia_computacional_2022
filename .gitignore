@@ -1,2 +1,5 @@
 *checkpoints
 *__pycache__
+*.pdf
+*.zip
+*.html
