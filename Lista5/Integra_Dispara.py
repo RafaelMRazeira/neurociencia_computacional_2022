@@ -111,7 +111,7 @@ class IntegraDispara:
             k4 = self.dt * self.dALLdt(self, V + k3, i_j)
 
             V = V + (k1 + 2 * k2 + 2 * k3 + k4) / 6
-            
+
             V_out[t] = V
 
             if V >= self.V_L:

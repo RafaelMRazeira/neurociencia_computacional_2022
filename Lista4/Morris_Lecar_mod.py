@@ -67,7 +67,7 @@ class MorrisLecarMod:
         V : float
             Membrane voltage, in mV.
         """
-        return 0.5 * (1 + np.tanh((V -10) / 14.5))
+        return 0.5 * (1 + np.tanh((V - 10) / 14.5))
 
     def tau_n(self, V):
         """Potassium (K) time constant.
@@ -77,7 +77,7 @@ class MorrisLecarMod:
         V : float
             Membrane voltage, in mV.
         """
-        return 3 / (np.cosh((V- 10) / 29))
+        return 3 / (np.cosh((V - 10) / 29))
 
     def I_Ca(self, V):
         """Membrane current (in uA/cm^2) Calcium (Ca = element name).
@@ -170,7 +170,7 @@ class MorrisLecarMod:
             If True, plots the results.
         """
         X = odeint(self.dALLdt, [V0, 0.69], self.t, args=(J, times, self))
-        
+
         V = X[:, 0]
         n = X[:, 1]
 
@@ -200,9 +200,9 @@ class MorrisLecarMod:
 
         return V, n, i_inj_values
 
-class MorrisLecarModNullclines():
-    """Morris-Lecar neuron model with nullclines.
-    """
+
+class MorrisLecarModNullclines:
+    """Morris-Lecar neuron model with nullclines."""
 
     def calc_nullclines(self, I=0):
         """Calculate the nullclines of the FitzHugh-Nagumo model.
@@ -213,8 +213,10 @@ class MorrisLecarModNullclines():
             External current, in mA.
         """
 
-        dvdt_nullcline = lambda v: (-0.55 * (1 + np.tanh((v + 1) / 15)) * (v - 100) + 0.5 * (v + 50) + I) / (2 * (v + 70))
-        dndt_nullcline = lambda v: 0.5 * (1 + np.tanh((v - 10)/14.5))
+        dvdt_nullcline = lambda v: (
+            -0.55 * (1 + np.tanh((v + 1) / 15)) * (v - 100) + 0.5 * (v + 50) + I
+        ) / (2 * (v + 70))
+        dndt_nullcline = lambda v: 0.5 * (1 + np.tanh((v - 10) / 14.5))
 
         v = np.linspace(-40, 40, 100)
 
@@ -237,7 +239,7 @@ class MorrisLecarModNullclines():
         idx : int
             Index of equilibrium point.
         """
-        idx = idx+1
+        idx = idx + 1
         plt.plot(v, dvdt_nullcline, label="dvdt", color="red")
         plt.plot(v, dndt_nullcline, label="dndt", color="blue")
         plt.xlabel("v")
@@ -254,6 +256,7 @@ class MorrisLecarModNullclines():
             f"v_eq = ({round(w_point[0], 2)}, {round(v_point[0], 2)})",
         )
         plt.show()
+
 
 if __name__ == "__main__":
     runner = MorrisLecarMod(exp_time=100)

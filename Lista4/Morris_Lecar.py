@@ -170,7 +170,7 @@ class MorrisLecar:
             If True, plots the results.
         """
         X = odeint(self.dALLdt, [V0, 0.76], self.t, args=(J, times, self))
-        
+
         V = X[:, 0]
         n = X[:, 1]
 
@@ -201,9 +201,8 @@ class MorrisLecar:
         return V, n, i_inj_values
 
 
-class MorrisLecarNullclines():
-    """Morris-Lecar neuron model with nullclines.
-    """
+class MorrisLecarNullclines:
+    """Morris-Lecar neuron model with nullclines."""
 
     def calc_nullclines(self, I=15):
         """Calculate the nullclines of the FitzHugh-Nagumo model.
@@ -214,8 +213,10 @@ class MorrisLecarNullclines():
             External current, in mA.
         """
 
-        dvdt_nullcline = lambda v: (-0.55 * (1 + np.tanh((v + 1) / 15)) * (v - 100) + 0.5 * (v + 50) + I) / (2 * (v + 70))
-        dndt_nullcline = lambda v: 0.5 * (1 + np.tanh(v/30))
+        dvdt_nullcline = lambda v: (
+            -0.55 * (1 + np.tanh((v + 1) / 15)) * (v - 100) + 0.5 * (v + 50) + I
+        ) / (2 * (v + 70))
+        dndt_nullcline = lambda v: 0.5 * (1 + np.tanh(v / 30))
 
         v = np.linspace(-40, 40, 100)
 
@@ -254,6 +255,7 @@ class MorrisLecarNullclines():
             f"v_eq = ({round(w_point[0], 2)}, {round(v_point[0], 2)})",
         )
         plt.show()
+
 
 if __name__ == "__main__":
     runner = MorrisLecar(exp_time=100)
