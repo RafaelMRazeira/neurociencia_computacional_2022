@@ -22,15 +22,15 @@ class Izhikevich:
 
     def __init__(
         self,
-        C=150e-3,
-        V_r=-75,
-        V_L=-45,
-        k=1.2,
-        a=0.01,
-        b=5,
-        c=-56,
-        V_pico=50,
-        d=130,
+        C=25e-3,
+        V_r=-50,
+        V_L=-30,
+        k=1,
+        a=0.5,
+        b=25,
+        p=0.009,
+        c=-40,
+        V_pico=10,
         dt=1e-3,
         exp_time=2.0,
     ):
@@ -41,7 +41,7 @@ class Izhikevich:
         self.a = a
         self.b = b
         self.c = c
-        self.d = d
+        self.p = p
         self.V_pico = V_pico
         self.dt = dt
 
@@ -85,7 +85,7 @@ class Izhikevich:
         dVdt = (self.k * (V - self.V_r) * (V - self.V_L)) - u + i_j
         dVdt /= self.C
 
-        dUdt = self.a * (self.b * (V - self.V_r)) - u
+        dUdt = self.a * (self.b * (V - self.V_r) + self.p * (V - self.V_r) ** 3) - u
 
         return np.array([dVdt, dUdt])
 
@@ -127,7 +127,6 @@ class Izhikevich:
 
             if V >= self.V_pico:
                 V = self.c
-                u = u + self.d
                 v_spikes[t] = 1
 
             V_out[t] = V
@@ -147,6 +146,7 @@ class Izhikevich:
         plot : bool
             If True, plots the results.
         """
+
         i_inj_values = [self.I_inj(t, J, times) for t in self.t]
 
         X = self.runge_kutta(V_init, u_init, i_inj_values)
@@ -158,7 +158,7 @@ class Izhikevich:
             plt.figure(figsize=(16, 10))
 
             plt.subplot(3, 1, 1)
-            plt.title("Izhikevich Neuron")
+            plt.title("Izhikevich_mod Neuron")
             plt.plot(self.t, V, "k")
             plt.ylabel("V (mV)")
 
@@ -177,5 +177,5 @@ class Izhikevich:
 
 
 if __name__ == "__main__":
-    runner = Izhikevich(exp_time=10)
-    runner.run(J=[500], times=[(0.5, 5)])
+    runner = Izhikevich(exp_time=0.2)
+    runner.run(J=[14000], times=[(0.5, 5)])

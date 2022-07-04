@@ -158,7 +158,6 @@ class AdEx:
         plot : bool
             If True, plots the results.
         """
-
         i_inj_values = [self.I_inj(t, J, times) for t in self.t]
 
         X = self.runge_kutta(V_init, u_init, i_inj_values)
@@ -191,5 +190,3 @@ class AdEx:
 if __name__ == "__main__":
     runner = AdEx(exp_time=3)
     runner.run(J=[221e-12], times=[(0.5, 2.5)])
-    # runner = AdEx(exp_time=5, C=20e-3/500e6, G=1/500e6, a=0, b=60e-12, tau_u=30e-3)
-    # X = runner.run(J=[221e-12], times=[(0.5, 2.5)])

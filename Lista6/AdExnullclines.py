@@ -4,6 +4,8 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+from AdEx import AdEx
+
 EQUILIBRIUM_COLOR = {
     "Stable node": "C0",
     "Unstable node": "C1",
@@ -22,9 +24,19 @@ def AdEx_calc(x, t, G, V_r, delta_L, V_L, a, I):
     I : float
         External current, in mA.
     """
+    if isinstance(x[0], float):
+        if x[0] > 50e-3:
+            return np.array([-80e-3, x[1] + 20e-12])
+
     return np.array(
         [
-            -G * (x[0] - V_r) + G * delta_L * np.exp((x[0] - V_L) / delta_L) - x[1] + I,
+            (
+                -G * (x[0] - V_r)
+                + G * delta_L * np.exp((x[0] - V_L) / delta_L)
+                - x[1]
+                + I
+            )
+            / (5e-3 / 500e6),
             a * (x[0] - V_r),
         ]
     )
@@ -78,7 +90,11 @@ def find_roots(params):
     roots, infos, _, _ = fsolve(
         nullclineV, 0, args=tuple(params.values()), full_output=True
     )
-    return np.array([[r, infos["fvec"][0]] for r in roots])
+
+    roots_u, infos_u, _, _ = fsolve(
+        nullclineV, 0, args=tuple(params.values()), full_output=True
+    )
+    return np.array([[r, infos["fvec"][0], u] for r, u in zip(roots, roots_u)])
 
 
 def stability(jacobian):
@@ -124,18 +140,19 @@ def plot_phase_diagram(params, ax=None, title=None):
     eqstability = [stability(jacobian_AdEx(v=e[0], **params)) for e in eqnproot]
 
     for e, n in zip(eqnproot, eqstability):
-        ax.scatter(*e, color=EQUILIBRIUM_COLOR[n])
+        ax.scatter(e[0], e[1], color=EQUILIBRIUM_COLOR[n])
 
-        # Show a small perturbation of the stable equilibria...
-        time_span = np.linspace(0, 200, num=1500)
-        if n[:6] == "Stable":
-            for perturb in (0.01, 0.6):
-                ic = [e[0] + abs(perturb * e[0]), e[1]]
-
-                traj = odeint(
-                    AdEx_calc, y0=ic, t=time_span, args=tuple(params.values())
-                )
-                ax.plot(traj[:, 0], traj[:, 1])
+        adex = AdEx(
+            exp_time=1,
+            C=5e-3 / 500e6,
+            G=1 / 500e6,
+            V_pico=20e-3,
+            a=-0.5e-9,
+            b=7e-12,
+            tau_u=100e-3,
+        )
+        traj = adex.run(J=[65e-12], times=[(0, 2)], plot=False)
+        ax.plot(traj[0], traj[1], color="k")
 
     # Legend
     labels = frozenset(eqstability)
@@ -144,6 +161,7 @@ def plot_phase_diagram(params, ax=None, title=None):
         labels,
         loc="lower right",
     )
+    plt.show()
 
 
 def find_jacobian():
